@@ -113,6 +113,15 @@ private struct RunningView: View {
                 .listStyle(.plain)
             }
         }
+        // Keep the Lock Screen Live Activity in step: when this screen
+        // appears (e.g. after a relaunch) and when tags change the title.
+        .onAppear { BlockActivityController.sync(session) }
+        .onChange(of: liveActivityKey) { BlockActivityController.sync(session) }
+    }
+
+    /// Everything the Live Activity shows that tag edits can change.
+    private var liveActivityKey: String {
+        session.currentBlock?.path.map(\.title).joined(separator: " › ") ?? ""
     }
 }
 

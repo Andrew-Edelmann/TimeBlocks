@@ -25,10 +25,18 @@ Alerts are optional. A block has none unless the user sets one. Each block can h
 
 Stored on the block: kind, when it was set, timer length, when it was first meant to ring, when it rings next, number of snoozes, and total time snoozed.
 
-- A local notification rings it when the app is in the background. When the app is open, a banner offers Snooze (1, 5, 10 or 15 min) or Dismiss.
+- The alert is a system alarm (AlarmKit), the same system the Clock app uses. It rings even in silent mode, and a timer's countdown shows on the Lock Screen. From the system alert the user can Snooze (5 min) or Stop; the app copies that into the block's record (snooze count and time, or dismissed).
+- When the app is open, a banner also offers Snooze (1, 5, 10 or 15 min) or Dismiss.
+- If the user refuses alarm permission, alerts only show inside the app.
 - Ending the block cancels an alert that has not rung. The record stays.
 - Clear removes the alert and its record.
 - History shows the alert details for a block.
+
+## Lock Screen
+While a session runs, a Live Activity shows the current block's tags, where it sits ("Inside: …"), its clock and the session clock. It has **Next block** and **Stop** buttons, which run in the app without opening it. iOS ends a Live Activity after about 8 hours; the session keeps running, and the activity comes back the next time the Track screen is opened.
+
+## Battery
+Every running clock is drawn by the system from a start date (`Text(date, style: .timer)`), on screen, on the Lock Screen and in the Dynamic Island. The app does not redraw while a block runs. The Track screen re-runs only when an alert becomes due.
 
 ## Behavior
 - Blocks at the same level have no gaps: "Next block" uses one timestamp to end one block and start the next.
@@ -37,11 +45,11 @@ Stored on the block: kind, when it was set, timer length, when it was first mean
 - Tags and the note can be edited while the block runs and afterwards in History.
 
 ## Not yet built (open questions)
-- Snooze or dismiss from the notification itself (today you must open the app).
 - More than one alert per block. A repeating timer.
 - Ungroup, or moving a block into a different parent.
 - Pause (it would break the "no gaps" rule).
 - Editing start and end times after the fact.
 - Renaming tags.
 - Analysis of sequence and duration (for example, which block follows which, or time per tag including nested time).
-- Export (CSV or JSON), iCloud sync, widgets, Live Activity.
+- Export (CSV or JSON), iCloud sync, home-screen widgets.
+- Choosing the snooze length on the Lock Screen (it is fixed at 5 min there).

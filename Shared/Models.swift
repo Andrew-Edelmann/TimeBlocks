@@ -57,17 +57,24 @@ final class Session {
             .sorted()
     }
 
+    // Each action below also updates the Lock Screen Live Activity. They
+    // run on the main actor: from the app's buttons, and from the Lock
+    // Screen buttons (see BlockIntents.swift).
+
     /// Start a session with its first block.
+    @MainActor
     static func start(in context: ModelContext, at now: Date = .now) {
         let session = Session(startedAt: now)
         context.insert(session)
         let block = Block(startedAt: now)
         context.insert(block)
         block.session = session
+        BlockActivityController.sync(session)
     }
 
     /// Close the current block and open a sibling at the same instant.
     /// Using one timestamp for both means there is no gap between blocks.
+    @MainActor
     func nextBlock(in context: ModelContext, at now: Date = .now) {
         let current = currentBlock
         current?.close(at: now)
@@ -75,30 +82,37 @@ final class Session {
         context.insert(block)
         block.session = self
         block.parent = current?.parent
+        BlockActivityController.sync(self)
     }
 
     /// Open a block inside the current one. The current block keeps running.
+    @MainActor
     func nest(in context: ModelContext, at now: Date = .now) {
         let block = Block(startedAt: now)
         context.insert(block)
         block.session = self
         block.parent = currentBlock
+        BlockActivityController.sync(self)
     }
 
     /// Close the current block. Its parent, if any, becomes current.
     /// If there is no parent, the session ends.
+    @MainActor
     func endCurrent(at now: Date = .now) {
         guard let current = currentBlock else { return }
         current.close(at: now)
         if current.parent == nil { endedAt = now }
+        BlockActivityController.sync(self)
     }
 
     /// Close every open block and end the session.
+    @MainActor
     func stop(at now: Date = .now) {
         for block in blocks ?? [] where block.endedAt == nil {
             block.close(at: now)
         }
         endedAt = now
+        BlockActivityController.sync(self)
     }
 }
 
