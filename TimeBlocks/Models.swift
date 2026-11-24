@@ -47,6 +47,16 @@ final class Session {
         (endedAt ?? now).timeIntervalSince(startedAt)
     }
 
+    /// When each open block's timer or alarm rings next. The Track screen
+    /// redraws only at these moments; every clock on it is drawn by the
+    /// system and needs no redraw from the app.
+    var alertDueDates: [Date] {
+        (blocks ?? [])
+            .filter { $0.endedAt == nil }
+            .compactMap(\.alertDueAt)
+            .sorted()
+    }
+
     /// Start a session with its first block.
     static func start(in context: ModelContext, at now: Date = .now) {
         let session = Session(startedAt: now)
@@ -199,7 +209,9 @@ final class Tag {
     }
 }
 
-/// "12:34" or "1:02:03"
+/// "2:05", "12:34" or "1:02:03". Matches the format of the system-drawn
+/// timer text (`Text(date, style: .timer)`), so finished and running
+/// durations look the same.
 func formatDuration(_ interval: TimeInterval) -> String {
     let total = max(0, Int(interval))
     let h = total / 3600
@@ -207,5 +219,5 @@ func formatDuration(_ interval: TimeInterval) -> String {
     let s = total % 60
     return h > 0
         ? String(format: "%d:%02d:%02d", h, m, s)
-        : String(format: "%02d:%02d", m, s)
+        : String(format: "%d:%02d", m, s)
 }

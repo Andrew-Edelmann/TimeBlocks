@@ -5,7 +5,6 @@ import SwiftUI
 struct BlockRow: View {
     let block: Block
     var depth: Int = 0
-    var now: Date = .now
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -30,8 +29,14 @@ struct BlockRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(formatDuration(block.duration(at: now)))
-                .font(.body.monospacedDigit())
+            Group {
+                if block.endedAt == nil {
+                    ElapsedClock(since: block.startedAt)
+                } else {
+                    Text(formatDuration(block.duration()))
+                }
+            }
+            .font(.body.monospacedDigit())
         }
         .padding(.leading, CGFloat(depth) * 18)
     }
@@ -41,5 +46,23 @@ struct BlockRow: View {
         let start = block.startedAt.formatted(style)
         guard let end = block.endedAt else { return "\(start) – now" }
         return "\(start) – \(end.formatted(style))"
+    }
+}
+
+/// A clock counting up from `start`. The system draws and updates it, so
+/// the app's views are not re-run every second while it ticks.
+struct ElapsedClock: View {
+    let start: Date
+    var alignment: TextAlignment = .trailing
+
+    init(since start: Date, alignment: TextAlignment = .trailing) {
+        self.start = start
+        self.alignment = alignment
+    }
+
+    var body: some View {
+        Text(start, style: .timer)
+            .monospacedDigit()
+            .multilineTextAlignment(alignment)
     }
 }

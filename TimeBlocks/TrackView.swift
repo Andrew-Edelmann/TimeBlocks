@@ -38,18 +38,22 @@ private struct RunningView: View {
     let session: Session
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.1)) { timeline in
-            let now = timeline.date
+        // The clocks below are drawn by the system and tick on their own.
+        // This view only needs to re-run when a timer or alarm becomes due,
+        // so the "ringing" banner can appear. It does not redraw every second.
+        TimelineView(.explicit(session.alertDueDates)) { _ in
+            let now = Date.now
             VStack(spacing: 16) {
                 // Big clock: the current block
                 VStack(spacing: 4) {
                     if let block = session.currentBlock {
-                        Text(formatDuration(block.duration(at: now)))
-                            .font(.system(size: 64, weight: .light).monospacedDigit())
+                        ElapsedClock(since: block.startedAt, alignment: .center)
+                            .font(.system(size: 64, weight: .light))
                     }
-                    Text("Session \(formatDuration(session.duration(at: now)))")
+                    Text("Session \(session.startedAt, style: .timer)")
                         .font(.subheadline.monospacedDigit())
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
 
                 // Any timer or alarm that is due, including on outer blocks
@@ -104,7 +108,7 @@ private struct RunningView: View {
                 // Open outer blocks show here with a running clock.
                 let currentID = session.currentBlock?.persistentModelID
                 List(session.flattened().filter { $0.id != currentID }) { item in
-                    BlockRow(block: item.block, depth: item.depth, now: now)
+                    BlockRow(block: item.block, depth: item.depth)
                 }
                 .listStyle(.plain)
             }

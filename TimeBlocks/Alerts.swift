@@ -78,27 +78,33 @@ extension Block {
         return due <= now
     }
 
-    /// One line for the Track screen, e.g. "Timer 25:00 · 12:03 left · snoozed 1× (05:00)"
-    func alertSummary(now: Date) -> String {
-        guard let kind = alertKind else { return "" }
-        var parts: [String] = []
+    /// One line for the Track screen, e.g. "Timer 25:00 · 12:03 left · snoozed 1× (5:00)".
+    /// The "left" part is a countdown drawn by the system, so it ticks
+    /// without the app redrawing.
+    func alertSummary(now: Date) -> Text {
+        guard let kind = alertKind else { return Text("") }
+        var text: Text
         switch kind {
         case .timer:
-            parts.append("Timer \(formatDuration(timerSeconds ?? 0))")
+            text = Text("Timer \(formatDuration(timerSeconds ?? 0))")
         case .alarm:
             let time = (alertTargetAt ?? now).formatted(date: .omitted, time: .shortened)
-            parts.append("Alarm \(time)")
+            text = Text("Alarm \(time)")
         }
         if let due = alertDueAt {
-            let left = due.timeIntervalSince(now)
-            parts.append(left > 0 ? "\(formatDuration(left)) left" : "ringing")
+            if due > now {
+                let countdown = Text(timerInterval: now...due, countsDown: true)
+                text = Text("\(text) · \(countdown) left")
+            } else {
+                text = Text("\(text) · ringing")
+            }
         } else if endedAt == nil {
-            parts.append("dismissed")
+            text = Text("\(text) · dismissed")
         }
         if snoozeCount > 0 {
-            parts.append("snoozed \(snoozeCount)× (\(formatDuration(snoozedSeconds)))")
+            text = Text("\(text) · snoozed \(snoozeCount)× (\(formatDuration(snoozedSeconds)))")
         }
-        return parts.joined(separator: " · ")
+        return text
     }
 }
 
@@ -185,8 +191,12 @@ struct AlertControl: View {
     var body: some View {
         if block.alertKind != nil {
             HStack {
-                Label(block.alertSummary(now: now), systemImage: block.alertKind == .alarm ? "alarm" : "timer")
-                    .font(.footnote)
+                Label {
+                    block.alertSummary(now: now)
+                } icon: {
+                    Image(systemName: block.alertKind == .alarm ? "alarm" : "timer")
+                }
+                .font(.footnote.monospacedDigit())
                 Spacer()
                 Button("Clear", role: .destructive) { block.clearAlert() }
                     .buttonStyle(.borderless)
