@@ -32,6 +32,11 @@ Stored on the block: kind, when it was set, timer length, when it was first mean
 - Clear removes the alert and its record.
 - History shows the alert details for a block.
 
+## Days
+A session covers at most one calendar day, so the top-level clock never runs for more than 24 hours. At midnight the running session ends and a new one starts at 00:00. Open blocks are not cut: they move to the new day's session with everything nested inside them, and keep their real start times. A sleep block started at 11 PM and ended at 8 AM is one 9-hour block in the new day; the session clock shows time since midnight.
+
+iOS may not run the app at midnight, so the switch also happens on the next action (opening the app, any button, a Lock Screen button). The result is the same, because every time is a stored date. Days on which the app was not used get no session. The Lock Screen's session clock keeps counting from the old start until the app next runs.
+
 ## Lock Screen
 While a session runs, a Live Activity shows the current block's tags, where it sits ("Inside: …"), its clock and the session clock. It has **Next block** and **Stop** buttons, which run in the app without opening it. iOS ends a Live Activity after about 8 hours; the session keeps running, and the activity comes back the next time the Track screen is opened.
 
