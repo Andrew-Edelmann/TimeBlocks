@@ -16,6 +16,11 @@
 			path = TimeBlocks;
 			sourceTree = "<group>";
 		};
+		1A0000000000000000000010 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				1A0000000000000000000002 /* TimeBlocks */,
+				1A0000000000000000000010 /* Shared */,
 				1A0000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -62,6 +68,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				1A0000000000000000000002 /* TimeBlocks */,
+				1A0000000000000000000010 /* Shared */,
 			);
 			name = TimeBlocks;
 			packageProductDependencies = (
@@ -145,7 +152,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				ONLY_ACTIVE_ARCH = YES;
@@ -169,7 +176,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
@@ -187,6 +194,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/TimeBlocks-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = TimeBlocks;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -215,6 +223,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Config/TimeBlocks-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = TimeBlocks;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

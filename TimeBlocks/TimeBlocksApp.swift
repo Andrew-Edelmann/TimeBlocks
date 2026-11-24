@@ -1,17 +1,14 @@
 import SwiftUI
 import SwiftData
-import UserNotifications
 
 @main
 struct TimeBlocksApp: App {
-    init() {
-        UNUserNotificationCenter.current().delegate = NotificationDelegate.shared
-    }
-
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // Copy snoozes and stops done on the Lock Screen into the blocks.
+                .task { await BlockAlarms.watch(Store.container.mainContext) }
         }
-        .modelContainer(for: [Session.self, Block.self, Tag.self])
+        .modelContainer(Store.container)
     }
 }
