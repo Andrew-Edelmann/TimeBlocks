@@ -76,6 +76,8 @@ final class Session {
     /// Using one timestamp for both means there is no gap between blocks.
     @MainActor
     func nextBlock(in context: ModelContext, at now: Date = .now) {
+        let today = rollOverIfNeeded(at: now)
+        guard today === self else { return today.nextBlock(in: context, at: now) }
         let current = currentBlock
         current?.close(at: now)
         let block = Block(startedAt: now)
@@ -88,10 +90,15 @@ final class Session {
     /// Open a block inside the current one. The current block keeps running.
     @MainActor
     func nest(in context: ModelContext, at now: Date = .now) {
+        let today = rollOverIfNeeded(at: now)
+        guard today === self else { return today.nest(in: context, at: now) }
+        // Find the parent before adding the new block: once the new block is
+        // in the session, it is itself the innermost open block.
+        let parent = currentBlock
         let block = Block(startedAt: now)
         context.insert(block)
         block.session = self
-        block.parent = currentBlock
+        block.parent = parent
         BlockActivityController.sync(self)
     }
 
@@ -99,6 +106,8 @@ final class Session {
     /// If there is no parent, the session ends.
     @MainActor
     func endCurrent(at now: Date = .now) {
+        let today = rollOverIfNeeded(at: now)
+        guard today === self else { return today.endCurrent(at: now) }
         guard let current = currentBlock else { return }
         current.close(at: now)
         if current.parent == nil { endedAt = now }
@@ -108,11 +117,59 @@ final class Session {
     /// Close every open block and end the session.
     @MainActor
     func stop(at now: Date = .now) {
+        let today = rollOverIfNeeded(at: now)
+        guard today === self else { return today.stop(at: now) }
         for block in blocks ?? [] where block.endedAt == nil {
             block.close(at: now)
         }
         endedAt = now
         BlockActivityController.sync(self)
+    }
+
+    // MARK: Midnight
+
+    /// A session covers at most one calendar day, so the top-level clock
+    /// never runs for more than 24 hours. Blocks are not cut at midnight:
+    /// a sleep block started at 11 PM and ended at 8 AM stays one 9-hour
+    /// block.
+    ///
+    /// If this running session started before today, it ends at the
+    /// midnight after it started, and a new session starts at today's
+    /// midnight. The open blocks move to the new session with their whole
+    /// tree (closed blocks nested inside them come along, so a nest is
+    /// never split across days). They keep their real start times.
+    ///
+    /// iOS may not run the app at midnight, so this runs on the next action
+    /// instead. The result is the same, because every time is a stored
+    /// date. If the app was not used for several days, the days in between
+    /// get no session.
+    ///
+    /// Returns the session that should receive actions now: this one, or
+    /// the new day's session.
+    @MainActor
+    @discardableResult
+    func rollOverIfNeeded(at now: Date = .now) -> Session {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+        let startDay = calendar.startOfDay(for: startedAt)
+        guard isRunning, startDay < today,
+              let firstMidnight = calendar.date(byAdding: .day, value: 1, to: startDay)
+        else { return self }
+
+        let openRoots = (blocks ?? []).filter { $0.parent == nil && $0.endedAt == nil }
+        endedAt = firstMidnight
+        guard !openRoots.isEmpty, let context = modelContext else {
+            BlockActivityController.sync(self)
+            return self
+        }
+
+        let next = Session(startedAt: today)
+        context.insert(next)
+        for block in openRoots {
+            block.move(to: next)
+        }
+        BlockActivityController.sync(next)
+        return next
     }
 }
 
@@ -167,6 +224,14 @@ final class Block {
             next = block.parent
         }
         return result
+    }
+
+    /// Move this block and everything nested inside it to `session`.
+    func move(to session: Session) {
+        self.session = session
+        for child in children ?? [] {
+            child.move(to: session)
+        }
     }
 
     func hasTag(_ tag: Tag) -> Bool {

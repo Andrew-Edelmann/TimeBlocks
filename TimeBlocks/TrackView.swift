@@ -3,6 +3,7 @@ import SwiftData
 
 struct TrackView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
     @Query(filter: #Predicate<Session> { $0.endedAt == nil })
     private var running: [Session]
 
@@ -29,6 +30,21 @@ struct TrackView: View {
                 }
             }
             .navigationTitle("Track")
+        }
+        // Start a new day's session at midnight (open blocks carry over).
+        // The wait costs no battery: the task sleeps until midnight, and if
+        // the app is suspended it simply runs late, on the next foreground.
+        .task(id: running.first?.persistentModelID) {
+            while !Task.isCancelled {
+                running.first?.rollOverIfNeeded()
+                let calendar = Calendar.current
+                let midnight = calendar.date(byAdding: .day, value: 1,
+                                             to: calendar.startOfDay(for: .now)) ?? .now
+                try? await Task.sleep(for: .seconds(max(1, midnight.timeIntervalSinceNow + 0.5)))
+            }
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { running.first?.rollOverIfNeeded() }
         }
     }
 }
